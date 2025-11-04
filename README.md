@@ -7,25 +7,45 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+## Système Alerte Citoyen – Backend (Laravel 12)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+API pour la plateforme de gestion des signalements urbains (Commune de Ouagadougou).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Démarrage rapide
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+cp .env.example .env
+php artisan key:generate
+# SQLite par défaut (database/database.sqlite est déjà créé)
+php artisan migrate --force
+php artisan db:seed --force
+php artisan serve
+```
+
+### Authentification
+- Sanctum (tokens personnels)
+- Endpoints: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`
+
+### Emails & file d’attente
+- Par défaut, si aucune config SMTP n’est fournie, les emails sont mis en file et les erreurs sont loguées.
+- Pour envoyer réellement des emails, configurez dans `.env`:
+  - `MAIL_MAILER=smtp`
+  - `MAIL_HOST=...`, `MAIL_PORT=...`, `MAIL_USERNAME=...`, `MAIL_PASSWORD=...`, `MAIL_ENCRYPTION=tls`, `MAIL_FROM_ADDRESS=noreply@exemple.com`, `MAIL_FROM_NAME="Alerte Citoyen"`
+- Démarrer le worker: `php artisan queue:listen`
+
+### Entités principales
+- Profils (rôles): citoyen, gestionnaire, direction, super_admin
+- Directions (services techniques)
+- Types d’alertes
+- Alertes (statut: en_attente, en_cours, termine)
+- Notifications (historique interne)
+
+### Dashboard
+- Route web: `/admin` affiche les KPI principaux.
 
 ## Learning Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Documentation officielle: https://laravel.com/docs
 
 ## Laravel Sponsors
 
