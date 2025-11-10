@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // Référentiels accessibles à tous les utilisateurs authentifiés
     Route::get('/directions', [DirectionController::class, 'index']);
+    Route::get('/types-alertes', [TypeAlerteController::class, 'index']);
 
     // Notifications utilisateur (in-app)
     Route::get('/notifications', [NotificationApiController::class, 'index']);
