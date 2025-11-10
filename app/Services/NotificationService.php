@@ -16,8 +16,8 @@ class NotificationService
             'utilisateur_id' => $utilisateurId,
             'message' => $message,
             'alerte_id' => $alerteId,
-            'date_envoi' => now(),
-            'statut' => true,
+            'date_envoi' => null,
+            'statut' => false,
         ]);
 
         $user = User::find($utilisateurId);

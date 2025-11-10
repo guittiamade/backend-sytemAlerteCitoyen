@@ -104,7 +104,11 @@ class AlerteController extends Controller
         ]);
         $from = $alerte->statut;
         $alerte->fill($validated);
-        $alerte->gestionnaire_id = $request->user()->id;
+        $actorRole = optional($request->user()->profile)->nom;
+        if ($actorRole === 'gestionnaire' && ($validated['statut'] ?? null) === 'en_cours') {
+            // Lier le gestionnaire uniquement lors de l'affectation initiale
+            $alerte->gestionnaire_id = $request->user()->id;
+        }
         $alerte->save();
         $alerte->histories()->create([
             'user_id' => $request->user()->id,

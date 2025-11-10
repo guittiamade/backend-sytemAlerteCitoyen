@@ -19,6 +19,19 @@ components:
         email: { type: string }
         tel: { type: string, nullable: true }
         profile_id: { type: integer, nullable: true }
+        direction_id: { type: integer, nullable: true }
+    Direction:
+      type: object
+      properties:
+        id: { type: integer }
+        description: { type: string }
+        direction_generale: { type: string, nullable: true }
+    TypeAlerte:
+      type: object
+      properties:
+        id: { type: integer }
+        nom: { type: string }
+        description: { type: string, nullable: true }
     Alerte:
       type: object
       properties:
@@ -32,18 +45,6 @@ components:
         gestionnaire_id: { type: integer, nullable: true }
         direction_id: { type: integer, nullable: true }
         type_alerte_id: { type: integer }
-    Direction:
-      type: object
-      properties:
-        id: { type: integer }
-        description: { type: string }
-        direction_generale: { type: string, nullable: true }
-    TypeAlerte:
-      type: object
-      properties:
-        id: { type: integer }
-        nom: { type: string }
-        description: { type: string, nullable: true }
     Notification:
       type: object
       properties:
@@ -53,24 +54,56 @@ components:
         statut: { type: boolean }
         utilisateur_id: { type: integer }
         alerte_id: { type: integer, nullable: true }
+    PaginationLinks:
+      type: object
+      properties:
+        first: { type: string, nullable: true }
+        last: { type: string, nullable: true }
+        prev: { type: string, nullable: true }
+        next: { type: string, nullable: true }
+    PaginationMeta:
+      type: object
+      properties:
+        current_page: { type: integer }
+        from: { type: integer, nullable: true }
+        last_page: { type: integer }
+        path: { type: string }
+        per_page: { type: integer }
+        to: { type: integer, nullable: true }
+        total: { type: integer }
+security:
+  - bearerAuth: []
 paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+
   /auth/register:
     post:
-      summary: Register user
+      summary: Register user (citoyen par défaut)
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [name, email, password]
               properties:
                 name: { type: string }
                 email: { type: string }
                 password: { type: string }
                 tel: { type: string, nullable: true }
       responses:
-        '200':
-          description: OK
+        '200': { description: OK }
   /auth/login:
     post:
       summary: Login
@@ -80,6 +113,7 @@ paths:
           application/json:
             schema:
               type: object
+              required: [email, password]
               properties:
                 email: { type: string }
                 password: { type: string }
@@ -87,68 +121,18 @@ paths:
         '200': { description: OK }
   /auth/me:
     get:
+      summary: Get current user
       security: [{ bearerAuth: [] }]
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
-  /alertes:
-    get:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      summary: Update current user
       security: [{ bearerAuth: [] }]
-      parameters:
-        - in: query
-          name: statut
-          schema: { type: string, enum: [en_attente, en_cours, termine] }
-      responses:
-        '200': { description: OK }
-    post:
-      security: [{ bearerAuth: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [titre, type_alerte_id]
-              properties:
-                titre: { type: string }
-                description: { type: string }
-                photo: { type: string }
-                localisation: { type: string }
-                type_alerte_id: { type: integer }
-      responses:
-        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Alerte' } } } }
-  /alertes/{id}:
-    get:
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: integer }
-      responses:
-        '200': { description: OK }
-    put:
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: integer }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200': { description: OK }
-  /alertes/{id}/statut:
-    post:
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: integer }
       requestBody:
         required: true
         content:
@@ -156,15 +140,23 @@ paths:
             schema:
               type: object
               properties:
-                statut: { type: string, enum: [en_attente, en_cours, termine] }
-                direction_id: { type: integer }
+                name: { type: string }
+                tel: { type: string }
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: OK }
+  /auth/logout:
+    post:
+      summary: Logout
+      security: [{ bearerAuth: [] }]
       responses:
         '200': { description: OK }
 
   /citoyen/alertes:
     get:
-      security: [{ bearerAuth: [] }]
       summary: Lister mes alertes (citoyen)
+      security: [{ bearerAuth: [] }]
       parameters:
         - in: query
           name: statut
@@ -188,10 +180,11 @@ paths:
           name: page
           schema: { type: integer, minimum: 1 }
       responses:
-        '200': { description: OK }
+        '200':
+          description: OK
     post:
-      security: [{ bearerAuth: [] }]
       summary: Créer une alerte (citoyen)
+      security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
@@ -207,11 +200,10 @@ paths:
                 type_alerte_id: { type: integer }
       responses:
         '201': { description: Created }
-
   /citoyen/alertes/{id}:
     get:
-      security: [{ bearerAuth: [] }]
       summary: Détail alerte (citoyen)
+      security: [{ bearerAuth: [] }]
       parameters:
         - in: path
           name: id
@@ -222,8 +214,8 @@ paths:
 
   /gestionnaire/alertes:
     get:
-      security: [{ bearerAuth: [] }]
       summary: Lister alertes (gestionnaire)
+      security: [{ bearerAuth: [] }]
       parameters:
         - in: query
           name: statut
@@ -251,11 +243,10 @@ paths:
           schema: { type: integer, minimum: 1 }
       responses:
         '200': { description: OK }
-
   /gestionnaire/alertes/{id}:
     get:
-      security: [{ bearerAuth: [] }]
       summary: Détail alerte (gestionnaire)
+      security: [{ bearerAuth: [] }]
       parameters:
         - in: path
           name: id
@@ -264,8 +255,8 @@ paths:
       responses:
         '200': { description: OK }
     patch:
-      security: [{ bearerAuth: [] }]
       summary: Modifier partiellement une alerte (gestionnaire)
+      security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
@@ -280,11 +271,10 @@ paths:
                 type_alerte_id: { type: integer }
       responses:
         '200': { description: OK }
-
   /gestionnaire/alertes/{id}/statut:
     post:
-      security: [{ bearerAuth: [] }]
       summary: Changer le statut (gestionnaire)
+      security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
@@ -297,18 +287,17 @@ paths:
                 direction_id: { type: integer, nullable: true }
       responses:
         '200': { description: OK }
-
   /gestionnaire/alertes/{id}/approuver:
     post:
-      security: [{ bearerAuth: [] }]
       summary: Approuver la résolution (gestionnaire)
+      security: [{ bearerAuth: [] }]
       responses:
         '200': { description: OK }
 
   /direction/alertes:
     get:
+      summary: Lister alertes de ma direction
       security: [{ bearerAuth: [] }]
-      summary: Lister alertes de ma direction (direction)
       parameters:
         - in: query
           name: statut
@@ -333,11 +322,10 @@ paths:
           schema: { type: integer, minimum: 1 }
       responses:
         '200': { description: OK }
-
   /direction/alertes/{id}:
     get:
-      security: [{ bearerAuth: [] }]
       summary: Détail alerte (direction)
+      security: [{ bearerAuth: [] }]
       parameters:
         - in: path
           name: id
@@ -346,8 +334,8 @@ paths:
       responses:
         '200': { description: OK }
     patch:
-      security: [{ bearerAuth: [] }]
       summary: Modifier partiellement une alerte (direction)
+      security: [{ bearerAuth: [] }]
       requestBody:
         required: false
         content:
@@ -356,11 +344,10 @@ paths:
               type: object
       responses:
         '200': { description: OK }
-
   /direction/alertes/{id}/statut:
     post:
-      security: [{ bearerAuth: [] }]
       summary: Changer le statut (direction)
+      security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
@@ -375,8 +362,8 @@ paths:
 
   /directions:
     get:
-      security: [{ bearerAuth: [] }]
       summary: Lister directions (auth)
+      security: [{ bearerAuth: [] }]
       responses:
         '200':
           description: OK
@@ -386,10 +373,94 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/Direction' }
 
+  /admin/directions:
+    get:
+      summary: Lister directions (admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Créer une direction (admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description]
+              properties:
+                description: { type: string }
+                direction_generale: { type: string, nullable: true }
+      responses:
+        '201': { description: Created }
+  /admin/directions/{id}:
+    put:
+      summary: Mettre à jour une direction (admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description: { type: string }
+                direction_generale: { type: string, nullable: true }
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Supprimer une direction (admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: No Content }
+
+  /admin/types-alertes:
+    get:
+      summary: Lister types d’alertes (admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Créer type d’alerte (admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nom]
+              properties:
+                nom: { type: string }
+                description: { type: string, nullable: true }
+      responses:
+        '201': { description: Created }
+  /admin/types-alertes/{id}:
+    put:
+      summary: Mettre à jour type d’alerte (admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nom: { type: string }
+                description: { type: string, nullable: true }
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Supprimer type d’alerte (admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: No Content }
+
   /notifications:
     get:
-      security: [{ bearerAuth: [] }]
       summary: Lister mes notifications
+      security: [{ bearerAuth: [] }]
       parameters:
         - in: query
           name: statut
@@ -402,11 +473,10 @@ paths:
           schema: { type: integer, minimum: 1 }
       responses:
         '200': { description: OK }
-
   /notifications/{id}:
     patch:
-      security: [{ bearerAuth: [] }]
       summary: Marquer une notification comme lue
+      security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
@@ -417,69 +487,3 @@ paths:
                 statut: { type: boolean }
       responses:
         '200': { description: OK }
-
-  /citoyen/stats:
-    get:
-      security: [{ bearerAuth: [] }]
-      summary: Statistiques du citoyen connecté
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  total: { type: integer }
-                  en_attente: { type: integer }
-                  en_cours: { type: integer }
-                  termine: { type: integer }
-
-  /gestionnaire/stats:
-    get:
-      security: [{ bearerAuth: [] }]
-      summary: Statistiques du gestionnaire connecté
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  assignes: { type: integer }
-                  en_cours: { type: integer }
-                  termine: { type: integer }
-
-  /direction/stats:
-    get:
-      security: [{ bearerAuth: [] }]
-      summary: Statistiques pour la direction de l'utilisateur
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  receptionnes: { type: integer }
-                  en_cours: { type: integer }
-                  termine: { type: integer }
-
-  /admin/stats:
-    get:
-      security: [{ bearerAuth: [] }]
-      summary: Statistiques globales (admin)
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  total: { type: integer }
-                  en_attente: { type: integer }
-                  en_cours: { type: integer }
-                  termine: { type: integer }

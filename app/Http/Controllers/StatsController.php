@@ -30,7 +30,14 @@ class StatsController extends Controller
 
     public function direction(Request $request)
     {
-        $directionId = $request->user()->alertesGerees()->value('direction_id');
+        $directionId = $request->user()->direction_id;
+        if (!$directionId) {
+            return [
+                'receptionnes' => 0,
+                'en_cours' => 0,
+                'termine' => 0,
+            ];
+        }
         return [
             'receptionnes' => Alerte::where('direction_id', $directionId)->count(),
             'en_cours' => Alerte::where('direction_id', $directionId)->where('statut', 'en_cours')->count(),

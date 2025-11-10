@@ -22,6 +22,26 @@ php artisan db:seed --force
 php artisan serve
 ```
 
+### Exécution sur le réseau local (Wi‑Fi/LAN)
+
+Pour permettre aux membres de l’équipe (ex. Windserf) d’accéder à l’API/app depuis le même réseau, lancez le serveur lié à votre IP locale:
+
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+Depuis un autre appareil sur le même Wi‑Fi, utilisez l’IP locale de la machine hôte:
+
+```
+http://<IP_LOCALE_DE_VOTRE_PC>:8000
+# Exemple: http://192.168.11.133:8000
+```
+
+Notes:
+- Assurez-vous que le pare‑feu autorise les connexions entrantes sur le port 8000.
+- Les appareils doivent être sur le même réseau.
+- Optionnel: définir `APP_URL=http://<IP>:8000` dans `.env` pour générer des URLs correctes.
+
 ### Authentification
 - Sanctum (tokens personnels)
 - Endpoints: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`
