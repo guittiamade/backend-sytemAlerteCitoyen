@@ -402,7 +402,9 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ## Notifications (in-app)
 - GET `/notifications`
-  - Query: `statut` (0/1), `per_page`, `page`
+  - Query: `statut` (0/1 = non lue/lue), `per_page`, `page`
+  - Par défaut, les notifications sont créées en **non lues** (`statut=false`) et `date_envoi=null`.
+  - Utilisez `PATCH` pour les marquer **lues**: `statut=true` met aussi `date_envoi=now()`.
   - 200: `{ data: Notification[], meta, links }` (uniquement les notifications de l’utilisateur connecté)
 
 - PATCH `/notifications/{id}`
@@ -422,7 +424,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 curl -X PATCH http://localhost:8000/api/notifications/456 \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{ "statut": true }'
+  -d '{"statut": true}'
 ```
 
 ## Erreurs & conventions
@@ -443,6 +445,31 @@ curl -X PATCH http://localhost:8000/api/notifications/456 \
 - Upload photo: champ `photo` prévu sous forme d’URL; si besoin de multipart upload, on pourra exposer un endpoint d’upload.
 - Notifications: enregistrées en base (`notifications_custom`) lors de la soumission et du changement de statut.
 
+## Statistiques
+
+- Citoyen: `GET /citoyen/stats`
+  - 200:
+  ```json
+  { "total": 12, "en_attente": 5, "en_cours": 4, "termine": 3 }
+  ```
+
+ - Gestionnaire: `GET /gestionnaire/stats`
+  - 200:
+  ```json
+  { "assignes": 18, "en_cours": 7, "termine": 9 }
+  ```
+
+- Direction: `GET /direction/stats`
+  - 200:
+  ```json
+  { "receptionnes": 25, "en_cours": 10, "termine": 12 }
+  ```
+
+- Admin: `GET /admin/stats`
+  - 200:
+  ```json
+  { "total": 120, "en_attente": 30, "en_cours": 50, "termine": 40 }
+  ```
+
 ## Versioning (optionnel)
 - Préfixe recommandé: `/api/v1` pour stabiliser les contrats.
-
