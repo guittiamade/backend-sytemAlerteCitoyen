@@ -52,6 +52,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Citoyen Démo',
                 'password' => bcrypt('password'),
+                'tel' => '0700000001',
                 'profile_id' => Profile::where('nom', 'citoyen')->value('id'),
             ]
         );
@@ -62,6 +63,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Super Admin',
                 'password' => bcrypt('password'),
+                'tel' => '0700009999',
                 'profile_id' => Profile::where('nom', 'super_admin')->value('id'),
             ]
         );

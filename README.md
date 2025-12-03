@@ -45,6 +45,8 @@ Notes:
 ### Authentification
 - Sanctum (tokens personnels)
 - Endpoints: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`
+- Inscription: `name`, `tel` (obligatoire), `password`, `email` (optionnel)
+- Connexion: `tel` + `password` (l’email n’est plus utilisée côté API)
 
 ### Emails & file d’attente
 - Par défaut, si aucune config SMTP n’est fournie, les emails sont mis en file et les erreurs sont loguées.
@@ -56,8 +58,8 @@ Notes:
 ### Entités principales
 - Profils (rôles): citoyen, gestionnaire, direction, super_admin
 - Directions (services techniques)
-- Types d’alertes
-- Alertes (statut: en_attente, en_cours, termine)
+- Types d’alertes (nom, description, image associée)
+- Alertes (statut: en_attente, en_cours, termine) – la localisation est obligatoire lors de la création
 - Notifications (historique interne)
 
 ### Dashboard

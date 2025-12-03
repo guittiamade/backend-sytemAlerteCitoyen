@@ -61,6 +61,7 @@ Ce document décrit la structure visuelle, les composants, les interactions et l
 - **Filtres**: barre dédiée (web) / `BottomSheet` (mobile), état synchronisé avec URL (web) et mémoire navigation (mobile).
 - **Timeline**: composant vertical listant événements (création, status_changed, approbation), horodatage.
 - **Notifications**: `Badged` sur icône cloche, `ListTile` avec action marquer lue.
+- **Types d’alertes**: chaque type possède un champ `image` (URL). Utiliser cette miniature dans les listes, formulaires et grilles pour aider l’identification rapide (icône ronde 40x40 ou chip illustrée).
 - **Feedback**: `SnackBar` pour succès/erreurs, `CircularProgressIndicator`/skeletons.
 
 ## Intégration API (contract mapping)

@@ -64,7 +64,7 @@ class AlerteController extends Controller
             'titre' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'photo' => ['nullable', 'string'],
-            'localisation' => ['nullable', 'string'],
+            'localisation' => ['required', 'string', 'max:255'],
             'type_alerte_id' => ['required', 'exists:types_alertes,id'],
         ]);
         $data['citoyen_id'] = $request->user()->id;
@@ -75,7 +75,10 @@ class AlerteController extends Controller
             'to_status' => $alerte->statut,
         ]);
         $notifier->notify($request->user()->id, 'Votre signalement a été soumis.', $alerte->id);
-        return response()->json($alerte->load('type'), 201);
+        return response()->json([
+            'message' => 'Votre alerte a été prise en compte. Merci pour votre signalement.',
+            'alerte' => $alerte->load('type'),
+        ], 201);
     }
 
     public function show(Alerte $alerte)
@@ -89,11 +92,14 @@ class AlerteController extends Controller
             'titre' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'photo' => ['sometimes', 'nullable', 'string'],
-            'localisation' => ['sometimes', 'nullable', 'string'],
+            'localisation' => ['sometimes', 'string', 'max:255'],
             'type_alerte_id' => ['sometimes', 'exists:types_alertes,id'],
         ]);
         $alerte->update($data);
-        return $alerte->refresh();
+        return response()->json([
+            'message' => 'Alerte mise à jour avec succès.',
+            'alerte' => $alerte->refresh(),
+        ]);
     }
 
     public function changerStatut(Request $request, Alerte $alerte, NotificationService $notifier)
@@ -140,7 +146,10 @@ class AlerteController extends Controller
         } else {
             $notifier->notify($alerte->citoyen_id, 'Mise à jour du statut: ' . $alerte->statut, $alerte->id);
         }
-        return $alerte->refresh();
+        return response()->json([
+            'message' => 'Le statut de l’alerte a été mis à jour.',
+            'alerte' => $alerte->refresh(),
+        ]);
     }
 
     public function approuverResolution(Request $request, Alerte $alerte, NotificationService $notifier)
@@ -150,7 +159,10 @@ class AlerteController extends Controller
         $alerte->gestionnaire_id = $request->user()->id;
         $alerte->save();
         $notifier->notify($alerte->citoyen_id, 'Votre alerte est résolue. Merci pour votre signalement.', $alerte->id);
-        return $alerte->refresh();
+        return response()->json([
+            'message' => 'Résolution approuvée et citoyen notifié.',
+            'alerte' => $alerte->refresh(),
+        ]);
     }
 }
 

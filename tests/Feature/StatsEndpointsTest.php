@@ -15,6 +15,8 @@ class StatsEndpointsTest extends TestCase
 {
     use RefreshDatabase;
 
+    private int $telSequence = 0;
+
     private function makeProfiles(): void
     {
         foreach (['citoyen','gestionnaire','direction','super_admin'] as $idx => $name) {
@@ -27,6 +29,13 @@ class StatsEndpointsTest extends TestCase
         return TypeAlerte::create(['nom' => $nom, 'description' => null]);
     }
 
+    private function makeTel(): string
+    {
+        $this->telSequence++;
+
+        return sprintf('070%07d', $this->telSequence);
+    }
+
     public function test_citoyen_stats_returns_counts(): void
     {
         $this->makeProfiles();
@@ -36,6 +45,7 @@ class StatsEndpointsTest extends TestCase
             'name' => 'Citoyen 1',
             'email' => 'citoyen@example.com',
             'password' => bcrypt('password'),
+            'tel' => $this->makeTel(),
             'profile_id' => Profile::where('nom','citoyen')->value('id'),
         ]);
 
@@ -44,15 +54,16 @@ class StatsEndpointsTest extends TestCase
             'name' => 'Autre',
             'email' => 'autre@example.com',
             'password' => bcrypt('password'),
+            'tel' => $this->makeTel(),
             'profile_id' => Profile::where('nom','citoyen')->value('id'),
         ]);
 
         // Créer des alertes pour le citoyen
-        Alerte::create(['titre' => 'A1', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'statut' => 'en_attente']);
-        Alerte::create(['titre' => 'A2', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'statut' => 'en_cours']);
-        Alerte::create(['titre' => 'A3', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'statut' => 'termine']);
+        Alerte::create(['titre' => 'A1', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'statut' => 'en_attente', 'localisation' => 'Secteur 10']);
+        Alerte::create(['titre' => 'A2', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'statut' => 'en_cours', 'localisation' => 'Secteur 11']);
+        Alerte::create(['titre' => 'A3', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'statut' => 'termine', 'localisation' => 'Secteur 12']);
         // Bruit: alerte d'un autre citoyen
-        Alerte::create(['titre' => 'B1', 'type_alerte_id' => $type->id, 'citoyen_id' => $other->id, 'statut' => 'en_attente']);
+        Alerte::create(['titre' => 'B1', 'type_alerte_id' => $type->id, 'citoyen_id' => $other->id, 'statut' => 'en_attente', 'localisation' => 'Secteur 13']);
 
         Sanctum::actingAs($citoyen);
         $res = $this->getJson('/api/citoyen/stats')->assertOk()->json();
@@ -71,6 +82,7 @@ class StatsEndpointsTest extends TestCase
             'name' => 'Gestionnaire 1',
             'email' => 'gest@example.com',
             'password' => bcrypt('password'),
+            'tel' => $this->makeTel(),
             'profile_id' => Profile::where('nom','gestionnaire')->value('id'),
         ]);
 
@@ -78,19 +90,21 @@ class StatsEndpointsTest extends TestCase
             'name' => 'Citoyen 2',
             'email' => 'cit2@example.com',
             'password' => bcrypt('password'),
+            'tel' => $this->makeTel(),
             'profile_id' => Profile::where('nom','citoyen')->value('id'),
         ]);
 
-        Alerte::create(['titre' => 'G1', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'gestionnaire_id' => $gestionnaire->id, 'statut' => 'en_cours']);
-        Alerte::create(['titre' => 'G2', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'gestionnaire_id' => $gestionnaire->id, 'statut' => 'termine']);
+        Alerte::create(['titre' => 'G1', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'gestionnaire_id' => $gestionnaire->id, 'statut' => 'en_cours', 'localisation' => 'Secteur 21']);
+        Alerte::create(['titre' => 'G2', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'gestionnaire_id' => $gestionnaire->id, 'statut' => 'termine', 'localisation' => 'Secteur 22']);
         // Bruit: assignée à un autre gestionnaire
         $otherGest = User::create([
             'name' => 'Gestionnaire 2',
             'email' => 'gest2@example.com',
             'password' => bcrypt('password'),
+            'tel' => $this->makeTel(),
             'profile_id' => Profile::where('nom','gestionnaire')->value('id'),
         ]);
-        Alerte::create(['titre' => 'G3', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'gestionnaire_id' => $otherGest->id, 'statut' => 'en_cours']);
+        Alerte::create(['titre' => 'G3', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'gestionnaire_id' => $otherGest->id, 'statut' => 'en_cours', 'localisation' => 'Secteur 23']);
 
         Sanctum::actingAs($gestionnaire);
         $res = $this->getJson('/api/gestionnaire/stats')->assertOk()->json();
@@ -109,6 +123,7 @@ class StatsEndpointsTest extends TestCase
             'name' => 'Direction 1',
             'email' => 'dir@example.com',
             'password' => bcrypt('password'),
+            'tel' => $this->makeTel(),
             'profile_id' => Profile::where('nom','direction')->value('id'),
             'direction_id' => $direction->id,
         ]);
@@ -117,11 +132,12 @@ class StatsEndpointsTest extends TestCase
             'name' => 'Citoyen 3',
             'email' => 'cit3@example.com',
             'password' => bcrypt('password'),
+            'tel' => $this->makeTel(),
             'profile_id' => Profile::where('nom','citoyen')->value('id'),
         ]);
 
-        Alerte::create(['titre' => 'D1', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'direction_id' => $direction->id, 'statut' => 'en_cours']);
-        Alerte::create(['titre' => 'D2', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'direction_id' => $direction->id, 'statut' => 'termine']);
+        Alerte::create(['titre' => 'D1', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'direction_id' => $direction->id, 'statut' => 'en_cours', 'localisation' => 'Secteur 31']);
+        Alerte::create(['titre' => 'D2', 'type_alerte_id' => $type->id, 'citoyen_id' => $citoyen->id, 'direction_id' => $direction->id, 'statut' => 'termine', 'localisation' => 'Secteur 32']);
 
         Sanctum::actingAs($directionUser);
         $res = $this->getJson('/api/direction/stats')->assertOk()->json();
@@ -147,16 +163,18 @@ class StatsEndpointsTest extends TestCase
         // Quelques alertes globales
         $cit = User::create([
             'name' => 'C', 'email' => 'c@example.com', 'password' => bcrypt('password'),
+            'tel' => $this->makeTel(),
             'profile_id' => Profile::where('nom','citoyen')->value('id'),
         ]);
-        Alerte::create(['titre' => 'A', 'type_alerte_id' => $type->id, 'citoyen_id' => $cit->id, 'statut' => 'en_attente']);
-        Alerte::create(['titre' => 'B', 'type_alerte_id' => $type->id, 'citoyen_id' => $cit->id, 'statut' => 'en_cours']);
-        Alerte::create(['titre' => 'C', 'type_alerte_id' => $type->id, 'citoyen_id' => $cit->id, 'statut' => 'termine']);
+        Alerte::create(['titre' => 'A', 'type_alerte_id' => $type->id, 'citoyen_id' => $cit->id, 'statut' => 'en_attente', 'localisation' => 'Secteur 41']);
+        Alerte::create(['titre' => 'B', 'type_alerte_id' => $type->id, 'citoyen_id' => $cit->id, 'statut' => 'en_cours', 'localisation' => 'Secteur 42']);
+        Alerte::create(['titre' => 'C', 'type_alerte_id' => $type->id, 'citoyen_id' => $cit->id, 'statut' => 'termine', 'localisation' => 'Secteur 43']);
 
         $admin = User::create([
             'name' => 'Admin',
             'email' => 'admin@example.com',
             'password' => bcrypt('password'),
+            'tel' => $this->makeTel(),
             'profile_id' => Profile::where('nom','super_admin')->value('id'),
         ]);
 

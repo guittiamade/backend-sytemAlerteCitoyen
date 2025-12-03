@@ -24,7 +24,7 @@
     @foreach($users as $u)
       <tr>
         <td class="px-3 py-2">{{ $u->name }}</td>
-        <td class="px-3 py-2">{{ $u->email }}</td>
+        <td class="px-3 py-2">{{ $u->email ?? '—' }}</td>
         <td class="px-3 py-2">{{ $u->tel }}</td>
         <td class="px-3 py-2">{{ optional($u->direction)->description }}</td>
         <td class="px-3 py-2">{{ optional($u->profile)->nom }}</td>

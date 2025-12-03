@@ -12,7 +12,7 @@ class TypeAlerte extends Model
 
     protected $table = 'types_alertes';
 
-    protected $fillable = ['nom', 'description'];
+    protected $fillable = ['nom', 'description', 'image'];
 
     public function alertes(): HasMany
     {

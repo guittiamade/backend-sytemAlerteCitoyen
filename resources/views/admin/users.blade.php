@@ -22,7 +22,7 @@
     @foreach($users as $u)
       <tr>
         <td class="px-3 py-2">{{ $u->name }}</td>
-        <td class="px-3 py-2">{{ $u->email }}</td>
+        <td class="px-3 py-2">{{ $u->email ?? '—' }}</td>
         <td class="px-3 py-2">{{ $u->tel }}</td>
         <td class="px-3 py-2">
           <form class="inline" method="post" action="{{ route('admin.users.update',$u) }}">

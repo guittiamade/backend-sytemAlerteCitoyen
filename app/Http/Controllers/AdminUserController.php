@@ -28,11 +28,15 @@ class AdminUserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if (!$request->filled('email')) {
+            $request->merge(['email' => null]);
+        }
+
         $data = $request->validate([
             'name' => ['required','string','max:255'],
-            'email' => ['required','email','max:255','unique:users,email'],
+            'email' => ['nullable','email','max:255','unique:users,email'],
             'password' => ['required','string','min:6'],
-            'tel' => ['nullable','string','max:255'],
+            'tel' => ['required','string','max:30','unique:users,tel'],
             'profile_id' => ['required','integer','exists:profiles,id'],
             'direction_id' => ['nullable','integer','exists:directions,id'],
         ]);
@@ -49,11 +53,15 @@ class AdminUserController extends Controller
 
     public function update(Request $request, User $user): RedirectResponse
     {
+        if ($request->has('email') && !$request->filled('email')) {
+            $request->merge(['email' => null]);
+        }
+
         $data = $request->validate([
             'name' => ['sometimes','required','string','max:255'],
-            'email' => ['sometimes','required','email','max:255','unique:users,email,' . $user->id],
+            'email' => ['sometimes','nullable','email','max:255','unique:users,email,' . $user->id],
             'password' => ['nullable','string','min:6'],
-            'tel' => ['nullable','string','max:255'],
+            'tel' => ['sometimes','required','string','max:30','unique:users,tel,' . $user->id],
             'profile_id' => ['sometimes','required','integer','exists:profiles,id'],
             'direction_id' => ['nullable','integer','exists:directions,id'],
         ]);

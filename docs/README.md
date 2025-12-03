@@ -11,10 +11,15 @@ Ce backend Laravel implémente l’API, l’authentification Sanctum, les entit�
 
 ## Sécurité / Rôles
 - Les rôles sont enregistrés dans `profiles`. Le contrôle d’accès fin peut être ajouté via Policies/Middleware (non inclus ici pour rester concis).
+- Auth API: login via `tel` + `password`; lors de l’inscription `email` est optionnel mais `tel` est unique et obligatoire.
 
 ## Schéma de données
 - Voir les migrations dans `database/migrations`.
 
 ## API
 - Voir `docs/API.md`.
+- Champs obligatoires notables:
+  - `POST /auth/register`: `name`, `tel`, `password`
+  - `POST /citoyen/alertes`: `titre`, `type_alerte_id`, `localisation`
+- `types_alertes` disposent d’un champ `image` (URL) utilisé par les clients.
 

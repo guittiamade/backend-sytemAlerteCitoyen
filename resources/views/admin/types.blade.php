@@ -15,6 +15,7 @@
         <thead class="bg-slate-50 text-slate-600 text-sm"><tr>
             <th class="px-3 py-2 border-b">Nom</th>
             <th class="px-3 py-2 border-b">Description</th>
+            <th class="px-3 py-2 border-b">Image</th>
             <th class="px-3 py-2 border-b">Supprimer</th>
             <th class="px-3 py-2 border-b">Éditer</th>
         </tr></thead>
@@ -23,6 +24,13 @@
             <tr data-href="{{ route('admin.types.edit',$t) }}" class="hover:bg-slate-50 cursor-pointer">
                 <td class="px-3 py-2">{{ $t->nom }}</td>
                 <td class="px-3 py-2">{{ $t->description }}</td>
+                <td class="px-3 py-2">
+                    @if($t->image)
+                        <img src="{{ $t->image }}" alt="Image type {{ $t->nom }}" class="h-10 w-10 object-cover rounded-md border border-slate-200">
+                    @else
+                        <span class="text-slate-400">–</span>
+                    @endif
+                </td>
                 <td class="px-3 py-2">
                     <form class="inline" method="post" action="{{ route('admin.types.destroy',$t) }}" onsubmit="return confirm('Supprimer ?')">
                         @csrf

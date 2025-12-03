@@ -5,6 +5,8 @@ Base URL: `/api`
 Toutes les requêtes authentifiées utilisent Sanctum avec un bearer token:
 `Authorization: Bearer <token>`.
 
+> L’API d’authentification s’appuie sur le **numéro de téléphone (`tel`) + mot de passe**. L’email d’un utilisateur est désormais optionnel.
+
 ## Rôles et préfixes
 - Citoyen: `/citoyen/*`
 - Gestionnaire: `/gestionnaire/*`
@@ -12,18 +14,20 @@ Toutes les requêtes authentifiées utilisent Sanctum avec un bearer token:
 - Admin: `/admin/*`
 
 ## Schémas communs
-- Utilisateur: `{ id, name, email, tel?, profile_id, created_at, updated_at }`
+- Utilisateur: `{ id, name, email?, tel, profile_id, created_at, updated_at }`
 - Alerte: `{ id, titre, description?, photo?, localisation?, statut, citoyen_id, gestionnaire_id?, direction_id?, type_alerte_id, created_at, updated_at }`
-- TypeAlerte: `{ id, nom, description?, created_at, updated_at }`
+- TypeAlerte: `{ id, nom, description?, image?, created_at, updated_at }`
 - Direction: `{ id, description, direction_generale?, created_at, updated_at }`
 
 ## Authentification
 - POST `/auth/register`
-  - Body: `{ name: string, email: string, password: string, tel?: string }`
+  - Body: `{ name: string, tel: string, password: string, email?: string }`
+  - Notes: `tel` doit être unique; si `email` est omis ou vide il sera stocké à `null`.
   - 200: `{ token: string, user: Utilisateur }`
 
 - POST `/auth/login`
-  - Body: `{ email: string, password: string }`
+  - Body: `{ tel: string, password: string }`
+  - Notes: la valeur de `tel` doit correspondre exactement à celle enregistrée (format libre).
   - 200: `{ token: string, user: Utilisateur }`
 
 - GET `/auth/me` → Utilisateur (auth)
@@ -33,7 +37,7 @@ Exemple (fetch):
 ```js
 const res = await fetch('/api/auth/login', {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: 'citoyen@example.com', password: 'password' })
+  body: JSON.stringify({ tel: '+22670000000', password: 'password' })
 });
 const { token } = await res.json();
 ```
@@ -62,7 +66,7 @@ Puis connectez-vous via l’API:
 ```bash
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"gestionnaire@example.com","password":"MotDePasseFort123"}'
+  -d '{"tel":"+22671000111","password":"MotDePasseFort123"}'
 ```
 
 ### Créer un compte direction (via back office)
@@ -75,7 +79,7 @@ Connexion API:
 ```bash
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"direction@example.com","password":"MotDePasseFort123"}'
+  -d '{"tel":"+22672000111","password":"MotDePasseFort123"}'
 ```
 
 ### Astuce (seed/tinker, optionnel)
@@ -140,7 +144,7 @@ curl -X POST http://localhost:8000/api/auth/register \
 - Body attendu:
 ```json
 {
-  "email": "jean.dupont@example.com",
+  "tel": "+22501020304",
   "password": "MotDePasseFort123"
 }
 ```
@@ -161,7 +165,7 @@ curl -X POST http://localhost:8000/api/auth/register \
 ```bash
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"jean.dupont@example.com","password":"MotDePasseFort123"}'
+  -d '{"tel":"+22501020304","password":"MotDePasseFort123"}'
 ```
 
 #### Utiliser le token
@@ -209,7 +213,7 @@ Les endpoints ci-dessous sont préfixés par le rôle. Exemple: `/citoyen/alerte
   - 200: `{ data: Alerte[], meta, links }`
 
 - POST `/citoyen/alertes`
-  - Body: `{ titre: string, description?: string, photo?: string, localisation?: string, type_alerte_id: number }`
+  - Body: `{ titre: string, description?: string, photo?: string, localisation: string, type_alerte_id: number }`
   - 201: `Alerte`
 
 - GET `/{prefix}/alertes/{id}` → `Alerte`
@@ -281,7 +285,7 @@ curl -X POST http://localhost:8000/api/citoyen/alertes \
 Payloads possibles:
 - Minimal (requis):
 ```json
-{ "titre": "Nid de poule", "type_alerte_id": 1 }
+{ "titre": "Nid de poule", "type_alerte_id": 1, "localisation": "Quartier Koulouba" }
 ```
 - Complet:
 ```json
@@ -395,8 +399,8 @@ curl -H "Authorization: Bearer $TOKEN" \
 - DELETE `/directions/{id}` (admin)
 
 ## Types d’alertes
-- GET `/types-alertes` → `TypeAlerte[]` (auth)
-- POST `/types-alertes` `{ nom, description? }` (admin)
+- GET `/types-alertes` → `TypeAlerte[]` (auth) (`image` contient l’URL de la vignette associée)
+- POST `/types-alertes` `{ nom, description?, image? }` (admin)
 - PUT `/types-alertes/{id}` (admin)
 - DELETE `/types-alertes/{id}` (admin)
 

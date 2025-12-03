@@ -12,11 +12,15 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        if (!$request->filled('email')) {
+            $request->merge(['email' => null]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', Password::defaults()],
-            'tel' => ['nullable', 'string', 'max:30'],
+            'tel' => ['required', 'string', 'max:30', 'unique:users,tel'],
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -25,17 +29,21 @@ class AuthController extends Controller
         $user = User::create($validated);
         $token = $user->createToken('api')->plainTextToken;
 
-        return response()->json(['token' => $token, 'user' => $user]);
+        return response()->json([
+            'message' => 'Inscription réussie. Votre compte citoyen est prêt.',
+            'token' => $token,
+            'user' => $user,
+        ]);
     }
 
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'tel' => ['required', 'string', 'max:30'],
             'password' => ['required'],
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+        $user = User::where('tel', $credentials['tel'])->first();
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json(['message' => 'Identifiants invalides'], 422);
         }
@@ -58,10 +66,13 @@ class AuthController extends Controller
     public function updateMe(Request $request)
     {
         $user = $request->user();
+        if ($request->has('email') && !$request->filled('email')) {
+            $request->merge(['email' => null]);
+        }
         $validated = $request->validate([
             'name' => ['sometimes','string','max:255'],
-            'tel' => ['sometimes','nullable','string','max:30'],
-            'email' => ['sometimes','email','max:255','unique:users,email,' . $user->id],
+            'tel' => ['sometimes','string','max:30','unique:users,tel,' . $user->id],
+            'email' => ['sometimes','nullable','email','max:255','unique:users,email,' . $user->id],
             'password' => ['sometimes', Password::defaults()],
         ]);
         if (array_key_exists('password', $validated)) {
